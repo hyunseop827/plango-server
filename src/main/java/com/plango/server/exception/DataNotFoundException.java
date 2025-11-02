@@ -1,4 +1,4 @@
-package com.plango.server;
+package com.plango.server.exception;
 
 public class DataNotFoundException extends RuntimeException{
     String message;

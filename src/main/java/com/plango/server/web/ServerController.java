@@ -1,4 +1,4 @@
-package com.plango.server;
+package com.plango.server.web;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

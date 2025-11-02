@@ -1,6 +1,8 @@
 package com.plango.server.user;
 
-import com.plango.server.DataNotFoundException;
+import com.plango.server.exception.DataNotFoundException;
+import com.plango.server.user.dto.UserCreateRequest;
+import com.plango.server.user.dto.UserResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,16 @@ public class UserService {
             UserEntity ue1 = userEntity.get();
             UserResponse u1 = new UserResponse(ue1.getName(),ue1.getMbti());
             return u1;
+        }
+        else throw new DataNotFoundException("User not found");
+    }
+
+    //NOTE AI 테스트
+    public String getUserNameById(String id){
+        Optional<UserEntity> userEntity = userRepository.findById(id);
+        if(userEntity.isPresent()){
+            UserEntity ue1 = userEntity.get();
+            return ue1.getName();
         }
         else throw new DataNotFoundException("User not found");
     }

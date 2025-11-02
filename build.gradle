@@ -27,6 +27,9 @@ dependencies {
 	runtimeOnly 'com.mysql:mysql-connector-j' // mysql
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    //AI 관련
+    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai:1.1.0-M3'
 }
 
 tasks.named('test') {

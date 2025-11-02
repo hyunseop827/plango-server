@@ -1,9 +1,11 @@
 package com.plango.server.user;
 
+import com.plango.server.user.dto.UserCreateRequest;
+import com.plango.server.user.dto.UserResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController //해당 어노테이션 붙으면 알아서 자동으로 JSON 직렬화 및 역직렬화함
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;

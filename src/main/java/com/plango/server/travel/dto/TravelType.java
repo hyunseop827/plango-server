@@ -1,3 +1,3 @@
-package com.plango.server.travel;
+package com.plango.server.travel.dto;
 
 public enum TravelType { DOMESTIC, OVERSEAS }

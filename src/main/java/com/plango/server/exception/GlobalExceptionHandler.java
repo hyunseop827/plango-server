@@ -1,4 +1,4 @@
-package com.plango.server;
+package com.plango.server.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

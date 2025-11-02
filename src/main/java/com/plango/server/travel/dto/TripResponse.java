@@ -1,4 +1,4 @@
-package com.plango.server.travel;
+package com.plango.server.travel.dto;
 
 import java.util.List;
 
