@@ -44,6 +44,7 @@ public class UserService {
 
         UserEntity userEntity = new UserEntity(publicId, nickname,mbti);
         userRepository.save(userEntity);
+        userRepository.flush();
 
         return publicId;
     }
