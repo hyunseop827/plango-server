@@ -1,5 +1,6 @@
 package com.plango.server.ai;
 
+import com.plango.server.ai.dto.AiHelloResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,9 +18,8 @@ public class AiController {
     }
 
     //NOTE AI 테스트
-    //id 입력받으면 그냥 단순하게 입력
     @GetMapping("/{publicId}")
-    public String AiHi(@PathVariable String publicId) {
+    public AiHelloResponse AiHi(@PathVariable String publicId) {
         return aiService.generateGreeting(publicId);
     }
 }

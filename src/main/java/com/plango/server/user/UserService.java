@@ -2,7 +2,8 @@ package com.plango.server.user;
 
 import com.plango.server.exception.DataNotFoundException;
 import com.plango.server.user.dto.UserCreateRequest;
-import com.plango.server.user.dto.UserResponse;
+import com.plango.server.user.dto.UserCreateResponse;
+import com.plango.server.user.dto.UserReadResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,21 +49,20 @@ public class UserService {
     }
 
     // Read
-    // 공개 키로 읽기
     @Transactional(readOnly = true)
-    public UserResponse getUserByPublicId(String publicId){
+    public UserReadResponse getUserByPublicId(String publicId){
         Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
         if(userEntity.isPresent()){
             UserEntity ue1 = userEntity.get();
-            return new UserResponse(ue1.getNickname(),ue1.getMbti());
+            return new UserReadResponse(ue1.getPublicId(),ue1.getNickname(),ue1.getMbti());
         }
         else throw new DataNotFoundException("User not found");
     }
 
     //NOTE AI 테스트
     @Transactional(readOnly = true)
-    public String getUserNicknameByPublicId(String PublicId){
-        Optional<UserEntity> userEntity = userRepository.findByPublicId(PublicId);
+    public String getUserNicknameByPublicId(String publicId){
+        Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
         if(userEntity.isPresent()){
             return userEntity.get().getNickname();
         }

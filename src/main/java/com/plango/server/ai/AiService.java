@@ -24,7 +24,7 @@ public class AiService {
         this.chat = chatClientBuilder.build();
     }
 
-    public String generateGreeting(String publicId){
+    public AiHelloResponse generateGreeting(String publicId){
         //이름 가져오기
         String nickname = userService.getUserNicknameByPublicId(publicId);
 
@@ -41,8 +41,8 @@ public class AiService {
                 .entity(AiHelloResponse.class); // ← {"msg":"..."} 를 AiResponse로 매핑
 
         System.out.println(ai);
-        //일단은 스트링 리턴
-        return ai.msg() + " " +ai.joke();
+        //DTO 객체 리턴
+        return ai;
     }
 
 

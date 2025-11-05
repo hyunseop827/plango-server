@@ -48,9 +48,4 @@ public class AiHelloMapper {
             - 다른 텍스트/마크다운/설명 금지.
         """;
     }
-
-    // [ai -> 서버]
-    public String toPlainText(AiHelloResponse ai) {
-        return ai.msg();
-    }
 }
