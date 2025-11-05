@@ -4,5 +4,4 @@ public record UserReadResponse(
         String publicId,
         String nickname,
         String mbti
-) {
-}
+) {}

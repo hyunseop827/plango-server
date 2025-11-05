@@ -2,7 +2,6 @@ package com.plango.server.user;
 
 import com.plango.server.exception.DataNotFoundException;
 import com.plango.server.user.dto.UserCreateRequest;
-import com.plango.server.user.dto.UserCreateResponse;
 import com.plango.server.user.dto.UserReadResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
