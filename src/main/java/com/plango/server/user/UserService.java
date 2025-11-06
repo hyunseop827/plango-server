@@ -68,4 +68,14 @@ public class UserService {
         }
         else throw new DataNotFoundException("User not found");
     }
+
+    //NOTE 여행 저장 시, 유저 엔티티 반환
+    @Transactional(readOnly = true)
+    public UserEntity getUserEntityByPublicId(String publicId){
+        Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
+        if(userEntity.isPresent()){
+            return userEntity.get();
+        }
+        else throw new DataNotFoundException("User not found");
+    }
 }

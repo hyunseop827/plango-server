@@ -1,7 +1,10 @@
 package com.plango.server.travel;
 
+import com.plango.server.travel.dto.CompanionType;
+import com.plango.server.travel.dto.TravelType;
 import com.plango.server.user.UserEntity;
 import jakarta.persistence.*;
+
 import java.sql.Date;
 
 @Entity
@@ -27,6 +30,14 @@ public class TravelEntity {
     @Column(name = "travel_end", nullable = false)
     private Date travelEnd;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "travel_type", nullable = false)
+    private TravelType travelType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "travel_companion", nullable = false)
+    private CompanionType travelCompanion;
+
     @Column(name = "travel_theme1", length = 20)
     private String travelTheme1;
 
@@ -37,30 +48,60 @@ public class TravelEntity {
     private String travelTheme3;
 
     // 기본 생성자
-    protected TravelEntity() {}
+    protected TravelEntity() {
+    }
 
-    // 생성자
     public TravelEntity(UserEntity user, String travelDest, Date travelStart, Date travelEnd,
+                        TravelType travelType, CompanionType travelCompanion,
                         String travelTheme1, String travelTheme2, String travelTheme3) {
         this.user = user;
         this.travelDest = travelDest;
         this.travelStart = travelStart;
         this.travelEnd = travelEnd;
+        this.travelType = travelType;
+        this.travelCompanion = travelCompanion;
         this.travelTheme1 = travelTheme1;
         this.travelTheme2 = travelTheme2;
         this.travelTheme3 = travelTheme3;
     }
 
-    // Getter
-    public Long getTravelId() { return travelId; }
-    public UserEntity getUser() { return user; }
-    public String getTravelDest() { return travelDest; }
-    public Date getTravelStart() { return travelStart; }
-    public Date getTravelEnd() { return travelEnd; }
-    public String getTravelTheme1() { return travelTheme1; }
-    public String getTravelTheme2() { return travelTheme2; }
-    public String getTravelTheme3() { return travelTheme3; }
+    public Long getTravelId() {
+        return travelId;
+    }
 
-    // Setter (필요 시)
-    public void setUser(UserEntity user) { this.user = user; }
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public String getTravelDest() {
+        return travelDest;
+    }
+
+    public Date getTravelStart() {
+        return travelStart;
+    }
+
+    public Date getTravelEnd() {
+        return travelEnd;
+    }
+
+    public TravelType getTravelType() {
+        return travelType;
+    }
+
+    public CompanionType getTravelCompanion() {
+        return travelCompanion;
+    }
+
+    public String getTravelTheme1() {
+        return travelTheme1;
+    }
+
+    public String getTravelTheme2() {
+        return travelTheme2;
+    }
+
+    public String getTravelTheme3() {
+        return travelTheme3;
+    }
 }
