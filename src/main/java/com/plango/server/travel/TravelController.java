@@ -21,7 +21,7 @@ public class TravelController {
         return travelService.createTravel(req);
     }
 
-    //모든 여행 간략하게 보여주기c
+    //모든 여행 간략하게 보여주기
     @GetMapping("/read/{publicId}")
     public List<TravelSummaryResponse> readAllTravel(@PathVariable String publicId) {
         return travelService.readAllTravel(publicId);

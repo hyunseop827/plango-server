@@ -3,13 +3,12 @@ package com.plango.server.travel;
 import com.plango.server.ai.AiService;
 import com.plango.server.travel.dto.TravelCreateRequest;
 import com.plango.server.travel.dto.TravelSummaryResponse;
+import com.plango.server.travel.entity.TravelEntity;
 import com.plango.server.user.UserEntity;
 import com.plango.server.user.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -40,9 +39,6 @@ public class TravelService {
         //Date 형태 변환
         LocalDate start = LocalDate.parse(req.startDate());
         LocalDate end = LocalDate.parse(req.endDate());
-        // LocalDate → java.sql.Date (JPA가 MySQL DATE로 자동 매핑)
-        Date sqlStart = Date.valueOf(start);
-        Date sqlEnd = Date.valueOf(end);
         // 테마 추출
         List<String> themes = req.themes();
         String theme1 = themes.get(0);
@@ -50,7 +46,7 @@ public class TravelService {
         String theme3 = themes.get(2);
 
         TravelEntity travelEntity = new TravelEntity(
-                ue, travelDest, sqlStart, sqlEnd,
+                ue, travelDest, start,end,
                 req.travelType(), req.companionType(), theme1,
                 theme2, theme3
         );
@@ -69,12 +65,12 @@ public class TravelService {
         return travels.stream()
                 .map(t -> new TravelSummaryResponse(
                         t.getTravelId(),
-                        t.getTravelType(),                 // Enum 그대로
+                        t.getTravelType(),
                         t.getTravelDest(),
                         t.getTravelStart().toString(),
                         t.getTravelEnd().toString(),
                         List.of(t.getTravelTheme1(), t.getTravelTheme2(), t.getTravelTheme3()),
-                        t.getTravelCompanion()             // Enum 그대로
+                        t.getCompanionType()
                 ))
                 .toList();
     }

@@ -1,14 +1,13 @@
-package com.plango.server.travel;
+package com.plango.server.travel.entity;
 
 import com.plango.server.travel.dto.CompanionType;
 import com.plango.server.travel.dto.TravelType;
 import com.plango.server.user.UserEntity;
 import jakarta.persistence.*;
-
-import java.sql.Date;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "travels")
+@Table(name = "travel")
 public class TravelEntity {
 
     @Id
@@ -16,7 +15,7 @@ public class TravelEntity {
     @Column(name = "travel_id")
     private Long travelId;
 
-    // 다대일(N:1) 관계 — 여러 여행이 한 유저에 속함
+    // 다대일(N:1)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)  // FK 컬럼명 그대로 매핑
     private UserEntity user;
@@ -25,18 +24,18 @@ public class TravelEntity {
     private String travelDest;
 
     @Column(name = "travel_start", nullable = false)
-    private Date travelStart;
+    private LocalDate travelStart;
 
     @Column(name = "travel_end", nullable = false)
-    private Date travelEnd;
+    private LocalDate travelEnd;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "travel_type", nullable = false)
     private TravelType travelType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "travel_companion", nullable = false)
-    private CompanionType travelCompanion;
+    @Column(name = "companion_type", nullable = false)
+    private CompanionType companionType;
 
     @Column(name = "travel_theme1", length = 20)
     private String travelTheme1;
@@ -51,15 +50,15 @@ public class TravelEntity {
     protected TravelEntity() {
     }
 
-    public TravelEntity(UserEntity user, String travelDest, Date travelStart, Date travelEnd,
-                        TravelType travelType, CompanionType travelCompanion,
+    public TravelEntity(UserEntity user, String travelDest, LocalDate travelStart, LocalDate travelEnd,
+                        TravelType travelType, CompanionType companionType,
                         String travelTheme1, String travelTheme2, String travelTheme3) {
         this.user = user;
         this.travelDest = travelDest;
         this.travelStart = travelStart;
         this.travelEnd = travelEnd;
         this.travelType = travelType;
-        this.travelCompanion = travelCompanion;
+        this.companionType = companionType;
         this.travelTheme1 = travelTheme1;
         this.travelTheme2 = travelTheme2;
         this.travelTheme3 = travelTheme3;
@@ -77,11 +76,11 @@ public class TravelEntity {
         return travelDest;
     }
 
-    public Date getTravelStart() {
+    public LocalDate getTravelStart() {
         return travelStart;
     }
 
-    public Date getTravelEnd() {
+    public LocalDate getTravelEnd() {
         return travelEnd;
     }
 
@@ -89,8 +88,8 @@ public class TravelEntity {
         return travelType;
     }
 
-    public CompanionType getTravelCompanion() {
-        return travelCompanion;
+    public CompanionType getCompanionType() {
+        return companionType;
     }
 
     public String getTravelTheme1() {

@@ -42,8 +42,7 @@ public class UserService {
         String publicId = UUID.randomUUID().toString(); //공개 키 생성
 
         UserEntity userEntity = new UserEntity(publicId, nickname,mbti);
-        userRepository.save(userEntity);
-        userRepository.flush();
+        userRepository.saveAndFlush(userEntity);
 
         return publicId;
     }

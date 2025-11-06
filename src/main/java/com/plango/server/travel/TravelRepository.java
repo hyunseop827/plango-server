@@ -1,5 +1,6 @@
 package com.plango.server.travel;
 
+import com.plango.server.travel.entity.TravelEntity;
 import com.plango.server.user.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
