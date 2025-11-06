@@ -2,7 +2,7 @@ package com.plango.server.travel.dto;
 
 import java.util.List;
 
-public record TripResponse(
+public record TravelCreateResponse(
         String travelId, // 여행 순번
         String userId, // 사용자 id
         TravelType travelType,

@@ -1,6 +1,8 @@
 package com.plango.server.user;
 
+import com.plango.server.travel.TravelEntity;
 import jakarta.persistence.*;
+import java.util.*;
 
 @Entity
 @Table(name = "users", // 테이블 이름 및 유니크 제약 명시적
@@ -20,6 +22,9 @@ public class UserEntity {
 
     @Column(name="user_mbti",nullable = false,length = 4)
     private String mbti;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TravelEntity> travels = new ArrayList<>();
 
     public UserEntity(String publicId,
                       String nickname, String mbti) {

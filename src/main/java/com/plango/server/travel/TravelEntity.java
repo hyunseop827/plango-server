@@ -1,67 +1,66 @@
-//package com.plango.server.travel;
-//
-//
-//import jakarta.persistence.*;
-//
-//import java.sql.Date;
-//
-//@Entity @Table(name="tavel")
-//public class TravelEntity {
-//    @Id @Column
-//    private String travel_id;
-//    @Column(nullable = false,length = 100)
-//    private String travel_dest;
-//    @Column(nullable = false)
-//    private Date travel_start;
-//    @Column(nullable = false)
-//    private Date travel_end;
-//    @Column(nullable = false, length = 20)
-//    private String travel_theme1;
-//    @Column(nullable = false, length = 20)
-//    private String travel_theme2;
-//    @Column(nullable = false, length = 20)
-//    private String travel_theme3;
-//
-//    public TravelEntity(String travel_id, String travel_dest,
-//                        Date travel_start, Date travel_end,
-//                        String travel_theme1, String travel_theme2,
-//                        String travel_theme3) {
-//        this.travel_id = travel_id;
-//        this.travel_dest = travel_dest;
-//        this.travel_start = travel_start;
-//        this.travel_end = travel_end;
-//        this.travel_theme1 = travel_theme1;
-//        this.travel_theme2 = travel_theme2;
-//        this.travel_theme3 = travel_theme3;
-//    }
-//
-//    public TravelEntity() { }
-//
-//    public String getTravel_id() {
-//        return travel_id;
-//    }
-//
-//    public String getTravel_dest() {
-//        return travel_dest;
-//    }
-//
-//    public Date getTravel_start() {
-//        return travel_start;
-//    }
-//
-//    public Date getTravel_end() {
-//        return travel_end;
-//    }
-//
-//    public String getTravel_theme1() {
-//        return travel_theme1;
-//    }
-//
-//    public String getTravel_theme2() {
-//        return travel_theme2;
-//    }
-//
-//    public String getTravel_theme3() {
-//        return travel_theme3;
-//    }
-//}
+package com.plango.server.travel;
+
+import com.plango.server.user.UserEntity;
+import jakarta.persistence.*;
+import java.sql.Date;
+
+@Entity
+@Table(name = "travels")
+public class TravelEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "travel_id")
+    private Long travelId;
+
+    // 다대일(N:1) 관계 — 여러 여행이 한 유저에 속함
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)  // FK 컬럼명 그대로 매핑
+    private UserEntity user;
+
+    @Column(name = "travel_dest", nullable = false, length = 100)
+    private String travelDest;
+
+    @Column(name = "travel_start", nullable = false)
+    private Date travelStart;
+
+    @Column(name = "travel_end", nullable = false)
+    private Date travelEnd;
+
+    @Column(name = "travel_theme1", length = 20)
+    private String travelTheme1;
+
+    @Column(name = "travel_theme2", length = 20)
+    private String travelTheme2;
+
+    @Column(name = "travel_theme3", length = 20)
+    private String travelTheme3;
+
+    // 기본 생성자
+    protected TravelEntity() {}
+
+    // 생성자
+    public TravelEntity(UserEntity user, String travelDest, Date travelStart, Date travelEnd,
+                        String travelTheme1, String travelTheme2, String travelTheme3) {
+        this.user = user;
+        this.travelDest = travelDest;
+        this.travelStart = travelStart;
+        this.travelEnd = travelEnd;
+        this.travelTheme1 = travelTheme1;
+        this.travelTheme2 = travelTheme2;
+        this.travelTheme3 = travelTheme3;
+    }
+
+    // Getter
+    public Long getTravelId() { return travelId; }
+    public UserEntity getUser() { return user; }
+    public String getTravelDest() { return travelDest; }
+    public Date getTravelStart() { return travelStart; }
+    public Date getTravelEnd() { return travelEnd; }
+    public String getTravelTheme1() { return travelTheme1; }
+    public String getTravelTheme2() { return travelTheme2; }
+    public String getTravelTheme3() { return travelTheme3; }
+
+    // Setter (필요 시)
+    public void setUser(UserEntity user) { this.user = user; }
+}

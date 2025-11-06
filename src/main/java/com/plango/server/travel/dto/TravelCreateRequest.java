@@ -2,8 +2,7 @@ package com.plango.server.travel.dto;
 
 import java.util.List;
 
-public record TripCreateRequest(
-        String travelId, // 여행 순번 (사용자 입장에서 언제 만든 여행인지)
+public record TravelCreateRequest(
         String userId, // 유저 id
         TravelType travelType, // 여행 타입
         String travelLocation, // 여행지
