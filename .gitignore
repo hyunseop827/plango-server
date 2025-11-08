@@ -37,7 +37,7 @@ out/
 .vscode/
 
 ### Secrets / certs ###
-.env
+src/main/resources/.env
 *.env.*
 *.pem
 *.key
