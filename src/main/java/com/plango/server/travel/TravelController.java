@@ -21,7 +21,7 @@ public class TravelController {
         return travelService.createTravel(req);
     }
 
-    //모든 여행 간략하게 보여주기
+    //모든 여행 간략하게 보여주기c
     //앞으로 다가올 여행
     @GetMapping("/read/upcoming/{publicId}")
     public List<TravelSummaryResponse> readAllUpcomingTravel(@PathVariable String publicId) {

@@ -45,3 +45,6 @@ src/main/resources/.env
 *.jks
 *.keystore
 *.crt
+*.env
+*.env.*
+!.env.example

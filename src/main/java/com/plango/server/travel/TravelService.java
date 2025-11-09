@@ -6,7 +6,7 @@ import com.plango.server.travel.dto.*;
 import com.plango.server.travel.entity.*;
 import com.plango.server.travel.repos.*;
 import com.plango.server.user.*;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -35,6 +35,7 @@ public class TravelService {
     }
 
     //Read 모든 여행
+    @Transactional(readOnly = true)
     public List<TravelSummaryResponse> readAllTravel(String publicId) {
         //유저의 내부 키 빠르게 찾기
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
@@ -54,6 +55,7 @@ public class TravelService {
     }
 
     //다가올 여행
+    @Transactional(readOnly = true)
     public List<TravelSummaryResponse> readAllUpcomingTravel(String publicId) {
         LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
@@ -74,6 +76,7 @@ public class TravelService {
     }
 
     //지난 여행
+    @Transactional(readOnly = true)
     public List<TravelSummaryResponse> readAllFinishedTravel(String publicId) {
         LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
@@ -94,6 +97,7 @@ public class TravelService {
     }
 
     //진행중인 여행
+    @Transactional(readOnly = true)
     public List<TravelSummaryResponse> readAllOngoingTravel(String publicId) {
         LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
@@ -114,6 +118,7 @@ public class TravelService {
     }
 
     //Read 특정 여행
+    @Transactional(readOnly = true)
     public TravelDetailResponse readTravelDetail(String travelId) {
         Long t_id = Long.parseLong(travelId);
         Optional<TravelEntity> travel = travelRepository.findByTravelId(t_id);

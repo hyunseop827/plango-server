@@ -25,7 +25,7 @@ public interface TravelRepository extends JpaRepository<TravelEntity, Long> {
     List<TravelEntity> findByUserAndTravelEndBeforeOrderByTravelEndDesc(
             UserEntity user, LocalDate today);
 
-    @EntityGraph(attributePaths = {"travelDays", "travelDays.courses"})
+    @EntityGraph(attributePaths = {"user"})
     Optional<TravelEntity> findByTravelId(Long travelId);
 
 }
