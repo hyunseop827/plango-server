@@ -1,0 +1,9 @@
+{
+  "userPublicId": "0e4d3586-3a28-4c07-bd6e-f0237a246415",
+  "travelType": "DOMESTIC",
+  "travelDest": "대구",
+  "startDate": "2026-01-01",
+  "endDate": "2026-01-05",
+  "themes": ["쇼핑", "관광", "음식"],
+  "companionType": "SOLO"
+}

@@ -29,7 +29,7 @@ public class UserService {
             return userEntity.get().getId();
         }
         else  {
-            throw new DataNotFoundException("User not found");
+            throw new DataNotFoundException("UserService","해당 유저 없음", "");
         }
     }
 
@@ -55,7 +55,7 @@ public class UserService {
             UserEntity ue1 = userEntity.get();
             return new UserReadResponse(ue1.getPublicId(),ue1.getNickname(),ue1.getMbti());
         }
-        else throw new DataNotFoundException("User not found");
+        throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
     //NOTE AI 테스트
@@ -65,7 +65,7 @@ public class UserService {
         if(userEntity.isPresent()){
             return userEntity.get().getNickname();
         }
-        else throw new DataNotFoundException("User not found");
+        throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
     //NOTE 여행 저장 시, 유저 엔티티 반환
@@ -75,7 +75,7 @@ public class UserService {
         if(userEntity.isPresent()){
             return userEntity.get();
         }
-        else throw new DataNotFoundException("User not found");
+        throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
     //NOTE 여행 저장 시, 유저의 MBTI 반환
@@ -85,6 +85,6 @@ public class UserService {
         if(userEntity.isPresent()){
             return userEntity.get().getMbti();
         }
-        else throw new DataNotFoundException("User not found");
+        throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 }

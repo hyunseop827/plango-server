@@ -1,10 +1,10 @@
 package com.plango.server.exception;
 
-public class DataNotFoundException extends RuntimeException{
+public class ApiNotWorkingException extends RuntimeException {
     public String where;
     public String message;
     public String errorMsg;
-    public DataNotFoundException(String where, String message, String errorMsg) {
+    public ApiNotWorkingException(String where, String message, String errorMsg) {
         this.where = where;
         this.message = message;
         this.errorMsg = errorMsg;
@@ -12,6 +12,7 @@ public class DataNotFoundException extends RuntimeException{
     public String getWhere() {
         return where;
     }
+
     @Override
     public String getMessage() {
         return message;

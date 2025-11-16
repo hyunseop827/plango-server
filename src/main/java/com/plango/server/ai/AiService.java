@@ -2,6 +2,7 @@ package com.plango.server.ai;
 
 import com.plango.server.ai.dto.*;
 import com.plango.server.ai.mapper.*;
+import com.plango.server.exception.ApiNotWorkingException;
 import com.plango.server.travel.dto.*;
 import com.plango.server.user.UserService;
 import org.springframework.ai.chat.client.ChatClient;
@@ -37,17 +38,21 @@ public class AiService {
         AiHelloRequest req = aiHelloMapper.buildAiHelloRequest(nickname);
         String userJson = aiHelloMapper.buildUserJson(req);
 
-        AiHelloResponse ai = chat
-                .prompt()
-                .system(aiHelloMapper.systemPromptJoke()) //항상 지켜야 할 규칙 대입
-                .user(userJson) // 추가적인 요청사항
-                .options(ChatOptions.builder().temperature(0.6).build())
-                .call()
-                .entity(AiHelloResponse.class); // ← {"msg":"..."} 를 AiResponse로 매핑
+        try{
+            AiHelloResponse ai = chat
+                    .prompt()
+                    .system(aiHelloMapper.systemPromptJoke()) //항상 지켜야 할 규칙 대입
+                    .user(userJson) // 추가적인 요청사항
+                    .options(ChatOptions.builder().temperature(0.6).build())
+                    .call()
+                    .entity(AiHelloResponse.class); // ← {"msg":"..."} 를 AiResponse로 매핑
 
-        System.out.println(ai);
-        //DTO 객체 리턴
-        return ai;
+            //DTO 객체 리턴
+            return ai;
+        }
+        catch (Exception e){
+            throw new ApiNotWorkingException("AiService","AI 인사 응답 오류",e.getMessage());
+        }
     }
 
     //NOTE AI 여행 계획 리턴
@@ -56,17 +61,22 @@ public class AiService {
         String userMbti = userService.getUserMbtiByPublicId(req.userPublicId());
         AiTravelRequest aiTravelRequest = aiTravelMapper.translateAi(req, userMbti);
         String userJson = aiTravelMapper.buildUserJson(aiTravelRequest);
-        AiTravelResponse detail = chat
-                .prompt()
-                .system(aiTravelMapper.systemPrompt())
-                .user(userJson)
-                .options(ChatOptions.builder().temperature(0.8).build())
-                .call()
-                .entity(AiTravelResponse.class);
+        try{
+            AiTravelResponse detail = chat
+                    .prompt()
+                    .system(aiTravelMapper.systemPrompt())
+                    .user(userJson)
+                    .options(ChatOptions.builder().temperature(0.8).build())
+                    .call()
+                    .entity(AiTravelResponse.class);
 
-        //응답을 깔끔하게 traveldetailresponse.day로 바꾸기
-        // 추가되는 것은
-        return normalize(detail);
+            //응답을 깔끔하게 traveldetailresponse.day로 바꾸기
+            // 추가되는 것은
+            return normalize(detail);
+        }
+        catch (Exception e){
+            throw new ApiNotWorkingException("AiService","AI 여행 생성 응답 오류",e.getMessage());
+        }
     }
 
     //NOTE AI 응답 정규화

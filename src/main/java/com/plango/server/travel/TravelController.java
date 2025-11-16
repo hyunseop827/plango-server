@@ -45,4 +45,10 @@ public class TravelController {
     public TravelDetailResponse readTravelDetail(@PathVariable String travelId) {
         return travelService.readTravelDetail(travelId);
     }
+
+    //여행 삭제 하기
+    @DeleteMapping("/delete/{travelId}")
+    public TravelDeleteResponse deleteTravel(@PathVariable String travelId) {
+        return travelService.deleteTravel(travelId);
+    }
 }

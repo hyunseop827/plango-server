@@ -156,7 +156,7 @@ public class TravelService {
                     t.getCreatedDate().toString()
             );
         }
-        else throw new DataNotFoundException("Travel Not Found");
+        else throw new DataNotFoundException("TravelService","해당 여행 정보 없음","");
     }
 
 
@@ -214,6 +214,20 @@ public class TravelService {
                 days,
                 travelEntity.getCreatedDate().toString()
         );
+    }
+
+    //Delete
+    public TravelDeleteResponse deleteTravel(String travelId) {
+        TravelDeleteResponse response = new TravelDeleteResponse("deleted",travelId);
+
+        Optional<TravelEntity> travelEntity = travelRepository.findByTravelId(Long.valueOf(travelId));
+        if (travelEntity.isPresent()) {
+            TravelEntity t = travelEntity.get();
+            travelRepository.delete(t);
+
+            return response;
+        }
+        else throw new DataNotFoundException("TravelService","해당 여행 정보 없음","");
     }
 
 }
