@@ -10,6 +10,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.stereotype.Service;
 import java.util.*;
+import com.google.genai.errors.ServerException;
 
 @Service
 public class AiService {
@@ -65,26 +66,60 @@ public class AiService {
         String userMbti = userService.getUserMbtiByPublicId(req.userPublicId());
         AiTravelRequest aiTravelRequest = aiTravelMapper.translateAi(req, userMbti);
         String userJson = aiTravelMapper.buildUserJson(aiTravelRequest);
-        try{
-            //NOTE -> 버그 바뀐 부분
-            var response = chat
-                    .prompt()
-                    .system(aiTravelMapper.systemPrompt())
-                    .user(userJson)
-                    .options(ChatOptions.builder().temperature(0.1).build())
-                    .call();
+        int maxRetry = 3;
 
-            String raw = response.content();
-            System.out.println("===== AI travel raw response =====");
-            System.out.println(raw);
+        for (int attempt = 1; attempt <= maxRetry; attempt++) {
+            try {
+                var response = chat
+                        .prompt()
+                        .system(aiTravelMapper.systemPrompt())
+                        .user(userJson)
+                        .options(ChatOptions.builder().temperature(0.1).build())
+                        .call();
 
-            AiTravelResponse detail = mapper.readValue(raw, AiTravelResponse.class);
+                String raw = response.content();
+                System.out.println("===== AI travel raw response =====");
+                System.out.println(raw);
 
-            return normalize(detail);
+                AiTravelResponse detail = mapper.readValue(raw, AiTravelResponse.class);
+
+                return normalize(detail); // 정상 응답이면 바로 리턴
+            }
+            catch (ServerException se) {
+                String msg = se.getMessage();
+                boolean is503 = (msg != null && msg.contains("503"));
+
+                if (is503 && attempt < maxRetry) {
+                    System.out.println("retry attempt = " + (attempt + 1));
+                    try {
+                        Thread.sleep(300L * attempt); // 아주 간단한 backoff
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    continue;
+                }
+
+                throw new ApiNotWorkingException(
+                        "AiService",
+                        "AI 서버 과부하/서버 오류",
+                        se.getMessage()
+                );
+            }
+            catch (Exception e) {
+                throw new ApiNotWorkingException(
+                        "AiService",
+                        "AI 여행 생성 응답 오류",
+                        e.getMessage()
+                );
+            }
         }
-        catch (Exception e){
-            throw new ApiNotWorkingException("AiService","AI 여행 생성 응답 오류",e.getMessage());
-        }
+
+        // 방어 코드 (여기까지 오면 뭔가 이상한 상황)
+        throw new ApiNotWorkingException(
+                "AiService",
+                "AI 여행 생성 재시도 모두 실패",
+                "모든 재시도 실패"
+        );
     }
 
     //NOTE AI 응답 정규화
