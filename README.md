@@ -1,9 +1,10 @@
 # Plan Go - Server 
+### This Repository is for project [plango](https://github.com/hyunseop622/plango) server repository.
 
 ### Backend developer
-hyunseop622 - managed clouding, DB designer  
-using ec2 in AWS to run cloud server. 
+[hyunseop622](https://github.com/hyunseop622)
 
+---
 ## How to make JAR from spring boot
 ### 1. go to your project directory
 make sure you are in the project directory.

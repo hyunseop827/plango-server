@@ -1,5 +1,6 @@
 package com.plango.server.ai;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plango.server.ai.dto.*;
 import com.plango.server.ai.mapper.*;
 import com.plango.server.exception.ApiNotWorkingException;
@@ -17,16 +18,19 @@ public class AiService {
     private final UserService userService; //유저의 정보를 가져올 서비스
     private final AiHelloMapper aiHelloMapper; // 입력된 정보를 가공하고 객체 혹은 json으로 바꿀 매퍼
     private final AiTravelMapper aiTravelMapper;
+    private final ObjectMapper mapper; // ← 추가
     private final ChatClient chat; // AI 호츨
 
     // 생성자 주입
     public AiService(UserService userService,
                      AiHelloMapper aiHelloMapper,
                      AiTravelMapper aiTravelMapper,
+                     ObjectMapper mapper,
                      ChatClient.Builder chatClientBuilder) {
         this.userService = userService;
         this.aiHelloMapper = aiHelloMapper;
         this.aiTravelMapper = aiTravelMapper;
+        this.mapper = mapper;
         this.chat = chatClientBuilder.build();
     }
 
@@ -43,7 +47,7 @@ public class AiService {
                     .prompt()
                     .system(aiHelloMapper.systemPromptJoke()) //항상 지켜야 할 규칙 대입
                     .user(userJson) // 추가적인 요청사항
-                    .options(ChatOptions.builder().temperature(0.6).build())
+                    .options(ChatOptions.builder().temperature(0.1).build())
                     .call()
                     .entity(AiHelloResponse.class); // ← {"msg":"..."} 를 AiResponse로 매핑
 
@@ -62,16 +66,20 @@ public class AiService {
         AiTravelRequest aiTravelRequest = aiTravelMapper.translateAi(req, userMbti);
         String userJson = aiTravelMapper.buildUserJson(aiTravelRequest);
         try{
-            AiTravelResponse detail = chat
+            //NOTE -> 버그 바뀐 부분
+            var response = chat
                     .prompt()
                     .system(aiTravelMapper.systemPrompt())
                     .user(userJson)
-                    .options(ChatOptions.builder().temperature(0.8).build())
-                    .call()
-                    .entity(AiTravelResponse.class);
+                    .options(ChatOptions.builder().temperature(0.1).build())
+                    .call();
 
-            //응답을 깔끔하게 traveldetailresponse.day로 바꾸기
-            // 추가되는 것은
+            String raw = response.content();
+            System.out.println("===== AI travel raw response =====");
+            System.out.println(raw);
+
+            AiTravelResponse detail = mapper.readValue(raw, AiTravelResponse.class);
+
             return normalize(detail);
         }
         catch (Exception e){
@@ -81,25 +89,61 @@ public class AiService {
 
     //NOTE AI 응답 정규화
     public List<TravelDetailResponse.Days> normalize(AiTravelResponse res) {
-        int count = res.days().size(); //총 몇일 짜리 인가..
-        // 일자 먼저 생성
-        List<AiTravelResponse.AiDay> src = res.days();
-        List<TravelDetailResponse.Days> out = new ArrayList<>(count);
+        // 1. 최상위 null 방어
+        if (res == null || res.getDays() == null || res.getDays().isEmpty()) {
+            throw new ApiNotWorkingException(
+                    "AiService",
+                    "AI 여행 생성 응답 비어있음",
+                    "days 가 null 또는 empty"
+            );
+        }
 
-        int dayIndex = 1; //일수 정규화
-        for(int i = 0 ; i < count ; i++){
-            List<AiTravelResponse.AiCourse>  srcCourse = src.get(i).courses();
+        List<AiTravelResponse.AiDay> src = res.getDays();
+        List<TravelDetailResponse.Days> out = new ArrayList<>(src.size());
+
+        int dayIndex = 1;
+
+        for (AiTravelResponse.AiDay day : src) {
+            if (day == null) continue;
+
+            List<AiTravelResponse.AiCourse> srcCourse = day.getCourses();
+            if (srcCourse == null || srcCourse.isEmpty()) {
+                // 해당 일차에 코스가 없으면 스킵
+                continue;
+            }
+
             List<TravelDetailResponse.Course> outCourse = new ArrayList<>();
+            int autoOrder = 1; // order가 null/이상일 때 다시 부여할 순서
 
-            for(AiTravelResponse.AiCourse course : srcCourse){
+            for (AiTravelResponse.AiCourse course : srcCourse) {
+                if (course == null) continue;
 
-                Integer order = course.order();
-                String locationName = course.locationName();
-                Double lat = course.lat();
-                Double lng = course.lng();
-                String note = course.note();
-                String theme = course.theme();
-                Integer howLong = course.howLong();
+                // locationName 없으면 그 코스는 버린다
+                String locationName = course.getLocationName();
+                if (locationName == null || locationName.isBlank()) {
+                    continue;
+                }
+
+                // order가 null이거나 0/음수면 autoOrder로 재계산
+                Integer order = course.getOrder();
+                if (order == null || order <= 0) {
+                    order = autoOrder++;
+                }
+
+                Double lat = course.getLat();
+                Double lng = course.getLng();
+
+                String note = course.getNote();
+                if (note == null) note = "";
+
+                String theme = course.getTheme();
+                if (theme == null) theme = "";
+
+                Integer howLong = course.getHowLong();
+                // howLong이 없거나 이상하면 기본 120분
+                if (howLong == null || howLong <= 0) {
+                    howLong = 120;
+                }
 
                 outCourse.add(new TravelDetailResponse.Course(
                         order,
@@ -111,12 +155,25 @@ public class AiService {
                         howLong
                 ));
             }
-            out.add(new TravelDetailResponse.Days(
-                    dayIndex++,
-                    outCourse
-            ));
+
+            // 이 일차에 유효한 코스가 하나라도 있으면 Days 추가
+            if (!outCourse.isEmpty()) {
+                out.add(new TravelDetailResponse.Days(
+                        dayIndex++,
+                        outCourse
+                ));
+            }
+        }
+
+        if (out.isEmpty()) {
+            throw new ApiNotWorkingException(
+                    "AiService",
+                    "AI 여행 생성 응답 코스 없음",
+                    "모든 day 가 비어있음"
+            );
         }
 
         return out;
     }
+
 }
