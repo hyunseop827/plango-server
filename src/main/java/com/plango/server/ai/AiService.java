@@ -61,11 +61,13 @@ public class AiService {
     }
 
     //NOTE AI 여행 계획 리턴
+    //NOTE AI 여행 계획 리턴
     public List<TravelDetailResponse.Days> generateTravel(TravelCreateRequest req) {
-        //여행 요청 데이터 가공
+        // 1. 여행 요청 데이터 가공
         String userMbti = userService.getUserMbtiByPublicId(req.userPublicId());
         AiTravelRequest aiTravelRequest = aiTravelMapper.translateAi(req, userMbti);
         String userJson = aiTravelMapper.buildUserJson(aiTravelRequest);
+
         int maxRetry = 3;
 
         for (int attempt = 1; attempt <= maxRetry; attempt++) {
@@ -83,42 +85,50 @@ public class AiService {
 
                 AiTravelResponse detail = mapper.readValue(raw, AiTravelResponse.class);
 
-                return normalize(detail); // 정상 응답이면 바로 리턴
+                // 정상 응답이면 바로 리턴
+                return normalize(detail);
             }
-            catch (ServerException se) {
-                String msg = se.getMessage();
-                boolean is503 = (msg != null && msg.contains("503"));
+            catch (Exception e) {
+                // 어떤 예외가 실제로 오는지 확인용 로그
+                System.out.println("=== AI travel error === aierror");
+                System.out.println("attempt = " + attempt);
+                System.out.println("type    = " + e.getClass().getName());
+                System.out.println("message = " + e.getMessage());
 
-                if (is503 && attempt < maxRetry) {
-                    System.out.println("retry attempt = " + (attempt + 1));
+                String msg = e.getMessage();
+                boolean retryable = false;
+
+                if (msg != null) {
+                    //get code and check
+                    if (msg.contains("503") || msg.contains("502") || msg.contains("429")) {
+                        retryable = true;
+                    }
+                }
+
+                //retry
+                if (retryable && attempt < maxRetry) {
                     try {
-                        Thread.sleep(300L * attempt); // 아주 간단한 backoff
+                        Thread.sleep(300L * attempt); // 간단한 backoff
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
                     continue;
                 }
 
+                //iam done with this shit
                 throw new ApiNotWorkingException(
                         "AiService",
-                        "AI 서버 과부하/서버 오류",
-                        se.getMessage()
-                );
-            }
-            catch (Exception e) {
-                throw new ApiNotWorkingException(
-                        "AiService",
-                        "AI 여행 생성 응답 오류",
-                        e.getMessage()
+                        "AI 여행 생성 실패 (attempt=" + attempt + ")",
+                        e.getClass().getName() + " / " + e.getMessage()
                 );
             }
         }
 
-        // 방어 코드 (여기까지 오면 뭔가 이상한 상황)
+        //완전한 방어 코드
         throw new ApiNotWorkingException(
                 "AiService",
                 "AI 여행 생성 재시도 모두 실패",
-                "모든 재시도 실패"
+                "maxRetry = " + maxRetry
         );
     }
 
