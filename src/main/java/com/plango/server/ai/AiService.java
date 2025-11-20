@@ -83,7 +83,13 @@ public class AiService {
                 System.out.println("===== AI travel raw response =====");
                 System.out.println(raw);
 
-                AiTravelResponse detail = mapper.readValue(raw, AiTravelResponse.class);
+                //json으로 뽑기
+                String json = extractJson(raw);
+                System.out.println("===== AI travel cleaned json =====");
+                System.out.println(json);
+
+
+                AiTravelResponse detail = mapper.readValue(json, AiTravelResponse.class);
 
                 // 정상 응답이면 바로 리턴
                 return normalize(detail);
@@ -219,6 +225,52 @@ public class AiService {
         }
 
         return out;
+    }
+
+    //제이슨 백틱 날리기
+    private String extractJson(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        // 앞뒤 공백 제거
+        String cleaned = raw.trim();
+
+        // 1) 코드블럭(```)으로 시작하는 경우
+        if (cleaned.startsWith("```")) {
+            // 첫 줄(예: ```json) 날리기
+            int firstNewline = cleaned.indexOf('\n');
+            if (firstNewline != -1) {
+                cleaned = cleaned.substring(firstNewline + 1);
+            }
+
+            // 맨 마지막 ``` 제거
+            int lastFence = cleaned.lastIndexOf("```");
+            if (lastFence != -1) {
+                cleaned = cleaned.substring(0, lastFence);
+            }
+
+            cleaned = cleaned.trim();
+        }
+
+        // 2) 혹시 앞에 설명 텍스트가 있고 중간에 { 또는 [ 부터 JSON이 시작되는 경우
+        int braceIdx   = cleaned.indexOf('{');
+        int bracketIdx = cleaned.indexOf('[');
+
+        int jsonStart = -1;
+        if (braceIdx >= 0 && bracketIdx >= 0) {
+            jsonStart = Math.min(braceIdx, bracketIdx);
+        } else if (braceIdx >= 0) {
+            jsonStart = braceIdx;
+        } else if (bracketIdx >= 0) {
+            jsonStart = bracketIdx;
+        }
+
+        if (jsonStart > 0) {
+            cleaned = cleaned.substring(jsonStart);
+        }
+
+        return cleaned.trim();
     }
 
 }
