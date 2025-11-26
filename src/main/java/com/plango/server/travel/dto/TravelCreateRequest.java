@@ -2,12 +2,24 @@ package com.plango.server.travel.dto;
 
 import java.util.List;
 
+/**
+ * TravelCreateRequest from front-end
+ *
+ * @param userPublicId  user's public ID
+ * @param travelType
+ * @param travelDest
+ * @param startDate
+ * @param endDate
+ * @param themes
+ * @param companionType
+ */
 public record TravelCreateRequest(
-        String userPublicId, // 유저 id -> 퍼블릭
-        TravelType travelType, // 여행 타입
-        String travelDest, // 여행지
-        String startDate, // 여행 시작일
-        String endDate, //여행 종료일
-        List<String> themes, //여행 테마 선택
-        CompanionType companionType // 여행 동행자
-) { }
+        String userPublicId,
+        TravelType travelType,
+        String travelDest,
+        String startDate,
+        String endDate,
+        List<String> themes,
+        CompanionType companionType
+) {
+}

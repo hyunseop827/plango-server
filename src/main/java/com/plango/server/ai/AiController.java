@@ -6,7 +6,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// 나중에 여행 정보 받으면 -> Aiservice -> travelService -> travelRepository
+/**
+ * Controller url approach.
+ * Related to AiHelloRequest and Response
+ */
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {
@@ -17,7 +20,6 @@ public class AiController {
         this.aiService = aiService;
     }
 
-    //NOTE AI 테스트
     @GetMapping("/{publicId}")
     public AiHelloResponse AiHi(@PathVariable String publicId) {
         return aiService.generateGreeting(publicId);

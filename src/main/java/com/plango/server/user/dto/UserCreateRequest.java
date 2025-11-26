@@ -1,6 +1,13 @@
 package com.plango.server.user.dto;
 
+/**
+ * record class for user creation.
+ *
+ * @param nickname
+ * @param mbti
+ */
 public record UserCreateRequest(
-        String nickname, //사용자 닉네임
-        String mbti //사용자 MBTI
-) {}
+        String nickname,
+        String mbti
+) {
+}

@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
-
-// 리포지터리에서 반환한 값이 optional
-// 잘 처리해서 리턴
+/**
+ * user layer service
+ */
 @Service
 public class UserService {
 
@@ -21,19 +21,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    //DB 내부 키 찾는 함수
-    @Transactional(readOnly = true)
-    public Long getUserIdByPublicId(String publicId) {
-        Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
-        if (userEntity.isPresent()) {
-            return userEntity.get().getId();
-        }
-        else  {
-            throw new DataNotFoundException("UserService","해당 유저 없음", "");
-        }
-    }
 
-    //Create
+    // Create
     @Transactional
     public String createUser(UserCreateRequest userCreateRequest) {
         String nickname = userCreateRequest.nickname();
@@ -58,7 +47,11 @@ public class UserService {
         throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
-    //NOTE AI 테스트
+    /**
+     * AI service url.
+     * @param publicId
+     * @return
+     */
     @Transactional(readOnly = true)
     public String getUserNicknameByPublicId(String publicId){
         Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
@@ -68,7 +61,11 @@ public class UserService {
         throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
-    //NOTE 여행 저장 시, 유저 엔티티 반환
+    /**
+     * returning user by input public ID
+     * @param publicId
+     * @return exception or user
+     */
     @Transactional(readOnly = true)
     public UserEntity getUserEntityByPublicId(String publicId){
         Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
@@ -78,7 +75,11 @@ public class UserService {
         throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
-    //NOTE 여행 저장 시, 유저의 MBTI 반환
+    /**
+     * returning user MBTI searching by user public ID
+     * @param publicId
+     * @return exception or user MBTI
+     */
     @Transactional(readOnly = true)
     public String getUserMbtiByPublicId(String publicId){
         Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);

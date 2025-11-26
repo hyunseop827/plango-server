@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
 
+/**
+ * Returned specific travel plan from AI.
+ * Based on user preferences.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AiTravelResponse {
 

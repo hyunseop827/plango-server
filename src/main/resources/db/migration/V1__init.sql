@@ -7,7 +7,6 @@ CREATE TABLE `user` (
                         UNIQUE KEY `uk_user_public_id` (`user_public_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 여행(1)  : user(1) - travel(N)
 CREATE TABLE `travel` (
                           `travel_id`       BIGINT NOT NULL AUTO_INCREMENT,
                           `user_id`         BIGINT NOT NULL,
@@ -27,7 +26,6 @@ CREATE TABLE `travel` (
                                   ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 여행일(여행의 i일차)
 CREATE TABLE `travel_day` (
                               `travel_day_id`   BIGINT NOT NULL AUTO_INCREMENT,
                               `travel_id`       BIGINT NOT NULL,
@@ -40,7 +38,6 @@ CREATE TABLE `travel_day` (
                                       ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 여행 코스(해당 일차 내 순서)
 CREATE TABLE `travel_course` (
                                  `travel_course_id` BIGINT NOT NULL AUTO_INCREMENT,
                                  `travel_day_id`    BIGINT NOT NULL,

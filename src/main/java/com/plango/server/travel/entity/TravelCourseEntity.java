@@ -2,6 +2,9 @@ package com.plango.server.travel.entity;
 
 import jakarta.persistence.*;
 
+/**
+ * JPA travel course table.
+ */
 @Entity
 @Table(name = "travel_course")
 public class TravelCourseEntity {

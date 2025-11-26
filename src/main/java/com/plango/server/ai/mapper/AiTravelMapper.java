@@ -3,19 +3,35 @@ package com.plango.server.ai.mapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plango.server.ai.dto.AiTravelRequest;
 import com.plango.server.travel.dto.TravelCreateRequest;
-import com.plango.server.user.UserService;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper for parsing DTOs related to creating travel functions.
+ */
 @Component
 public class AiTravelMapper {
 
+    /**
+     * ObjectMapper to parse Object to JSON.
+     */
     private final ObjectMapper mapper;
 
-    public AiTravelMapper(ObjectMapper mapper, UserService userService) {
+    /**
+     * Constructor, injected ObjectMapper
+     *
+     * @param mapper
+     */
+    public AiTravelMapper(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 
-    // 앱 -> 서버 요청 ai로 변환
+    /**
+     * Convert user request to AI DTO.
+     *
+     * @param req DTO included user's preferences.
+     * @param userMbti user's MBTI
+     * @return AI travel DTO
+     */
     public AiTravelRequest translateAi(TravelCreateRequest req, String userMbti) {
         String publicId = req.userPublicId();
         AiTravelRequest aiTravelRequest = new AiTravelRequest(
@@ -33,6 +49,11 @@ public class AiTravelMapper {
         return aiTravelRequest;
     }
 
+    /**
+     * Converting object to JSON
+     * @param req AiTravelRequest
+     * @return JSON String
+     */
     public String buildUserJson(AiTravelRequest req) {
         try {
             String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(req);
@@ -41,6 +62,11 @@ public class AiTravelMapper {
         }catch (Exception e){ throw new RuntimeException(e);}
     }
 
+    /**
+     * Returning prompt
+     * Giving AI strict rules to easily parsing travel response
+     * @return
+     */
     public String systemPrompt() {
         return """
         당신은 여행 플래너입니다. 입력 JSON을 바탕으로 '일자별 코스'만 생성하세요.

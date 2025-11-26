@@ -1,17 +1,23 @@
 package com.plango.server.exception;
 
-public class DataNotFoundException extends RuntimeException{
+/**
+ * Exception for when data is missing.
+ */
+public class DataNotFoundException extends RuntimeException {
     public String where;
     public String message;
     public String errorMsg;
+
     public DataNotFoundException(String where, String message, String errorMsg) {
         this.where = where;
         this.message = message;
         this.errorMsg = errorMsg;
     }
+
     public String getWhere() {
         return where;
     }
+
     @Override
     public String getMessage() {
         return message;
