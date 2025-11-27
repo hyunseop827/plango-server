@@ -1,6 +1,5 @@
 package com.plango.server.travel.util;
 
-import com.plango.server.exception.ApiNotWorkingException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
@@ -21,52 +20,71 @@ public final class GeocodingUtil {
 
 
     /**
-     * returning coordinate from location name
-     * If the location isn't valid, it just gives null,
-     * Client just can ignore null and use infos from AI
+     * Returns coordinate from location name.
+     * If the location isn't valid, returns null.
+     * Client can ignore null and use coordinates from AI.
+     *
+     * @param location location name to search
+     * @param apiKey Google Maps API key
+     * @return Coordinate or null if not found
      */
     public static Coordinate getLocationCoordinateWithLocationName(String location, String apiKey) {
+        return getLocationCoordinateWithLocationName(location, null, apiKey);
+    }
 
+    /**
+     * Returns coordinate from location name with destination context for improved accuracy.
+     * If the location isn't valid, returns null.
+     * Client can ignore null and use coordinates from AI.
+     * 
+     * @param location location name to search
+     * @param destination destination context (e.g., "Seoul", "Busan") to improve accuracy
+     * @param apiKey Google Maps API key
+     * @return Coordinate or null if not found
+     */
+    public static Coordinate getLocationCoordinateWithLocationName(String location, String destination, String apiKey) {
         try {
-            // 1. Encode address. ' ' -> %20
-            String encodedAddress = URLEncoder.encode(location, StandardCharsets.UTF_8);
+            // Build search query with destination context for better accuracy
+            String searchQuery = (destination != null && !destination.isEmpty()) 
+                    ? location + ", " + destination 
+                    : location;
+            
+            String encodedAddress = URLEncoder.encode(searchQuery, StandardCharsets.UTF_8);
             String url = String.format(FORWARD_GEOCODING_URL, encodedAddress, apiKey);
 
-            // 2. call API and parse to Map
+            // Call Geocoding API and parse response
             RestTemplate restTemplate = new RestTemplate();
+            @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
 
-            if (response == null) {
+            if (response == null || !"OK".equals(response.get("status"))) {
                 return null;
             }
 
-            String status = (String) response.get("status");
-            if (!"OK".equals(status)) {
-               return null;
-            }
-
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
             if (results == null || results.isEmpty()) {
                 return null;
             }
 
-            // "address_components"
+            // Extract coordinates from first result
             Map<String, Object> result = results.get(0);
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> geometry = (Map<String, Object>) result.get("geometry");
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> locationData = (Map<String, Object>) geometry.get("location");
 
-            // "geometry"
-            Map<String,Object> geometry = (Map<String,Object>)result.get("geometry");
-
-            // "location"
-            Map<String, Object> loc =
-                    (Map<String, Object>) geometry.get("location");
-
-            double latitude = (Double)loc.get("lat");
-            double longitude = (Double)loc.get("lng");
+            double latitude = ((Number) locationData.get("lat")).doubleValue();
+            double longitude = ((Number) locationData.get("lng")).doubleValue();
 
             return new Coordinate(latitude, longitude);
 
         } catch (Exception e) {
-            throw new ApiNotWorkingException("GeocodingUtil","지오 코딩 오류!",e.getMessage());
+            // Log error and return null to prevent entire travel creation failure
+            System.err.println("Geocoding error for location: " + location + " - " + e.getMessage());
+            return null;
         }
     }
 

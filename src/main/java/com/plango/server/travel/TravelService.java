@@ -237,13 +237,14 @@ public class TravelService {
     }
 
     /**
-     * Save days and courses to DB
+     * Save days and courses to database with geocoding for missing coordinates
      *
-     * @param travelEntity travel entity
+     * @param travelEntity travel entity to associate with days and courses
      * @param days         days and courses data to save
      */
     private void saveDaysAndCourses(TravelEntity travelEntity, List<TravelDetailResponse.Days> days) {
         List<TravelCourseEntity> allCourses = new ArrayList<>();
+        String destination = travelEntity.getTravelDest();
         
         for (TravelDetailResponse.Days d : days) {
             TravelDayEntity day = new TravelDayEntity(travelEntity, d.dayIndex());
@@ -251,10 +252,23 @@ public class TravelService {
             travelDayRepository.save(day);
 
             for (TravelDetailResponse.Course c : d.courses()) {
+                Double lat = c.lat();
+                Double lng = c.lng();
+                
+                // Execute geocoding with destination context if coordinates are null
+                if (lat == null || lng == null) {
+                    Coordinate coordinate = GeocodingUtil.getLocationCoordinateWithLocationName(
+                            c.locationName(), destination, googleMapKey);
+                    if (coordinate != null) {
+                        lat = coordinate.latitude();
+                        lng = coordinate.longitude();
+                    }
+                }
+                
                 TravelCourseEntity course = new TravelCourseEntity(
                         day,
                         c.locationName(),
-                        c.lat(), c.lng(),
+                        lat, lng,
                         c.note(), c.theme(),
                         c.howLong(), c.order()
                 );
@@ -268,23 +282,28 @@ public class TravelService {
 
 
     /**
-     * Set location coordinate with Geocoding API (병렬 처리)
+     * Validate and correct location coordinates using Geocoding API with parallel processing.
+     * Only queries coordinates that are null to prevent duplicate API calls.
      *
-     * @param travel
+     * @param travel travel entity containing courses to validate
      */
     private void validateAndCorrectAllCoordinates(TravelEntity travel) {
-
         List<TravelCourseEntity> allCourses = travel.getTravelDays().stream()
                 .flatMap(day -> day.getCourses().stream())
                 .toList();
 
+        String destination = travel.getTravelDest();
+
         allCourses.parallelStream().forEach(course -> {
-            Coordinate corrected = GeocodingUtil.getLocationCoordinateWithLocationName(
-                    course.getLocationName(), googleMapKey);
-            
-            if (corrected != null) {
-                course.setLocationLat(corrected.latitude());
-                course.setLocationLng(corrected.longitude());
+            // Execute geocoding only if coordinates are null
+            if (course.getLocationLat() == null || course.getLocationLng() == null) {
+                Coordinate corrected = GeocodingUtil.getLocationCoordinateWithLocationName(
+                        course.getLocationName(), destination, googleMapKey);
+                
+                if (corrected != null) {
+                    course.setLocationLat(corrected.latitude());
+                    course.setLocationLng(corrected.longitude());
+                }
             }
         });
 
