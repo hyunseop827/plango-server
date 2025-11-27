@@ -94,4 +94,13 @@ public class TravelCourseEntity {
     }
 
     protected TravelCourseEntity() {  }
+
+
+    public void setLocationLat(Double locationLat) {
+        this.locationLat = locationLat;
+    }
+
+    public void setLocationLng(Double locationLng) {
+        this.locationLng = locationLng;
+    }
 }

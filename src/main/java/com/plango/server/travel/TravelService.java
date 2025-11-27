@@ -12,8 +12,10 @@ import com.plango.server.travel.entity.TravelEntity;
 import com.plango.server.travel.repos.TravelCourseRepository;
 import com.plango.server.travel.repos.TravelDayRepository;
 import com.plango.server.travel.repos.TravelRepository;
+import com.plango.server.travel.util.GeocodingUtil;
 import com.plango.server.user.UserEntity;
 import com.plango.server.user.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,9 @@ import java.util.Optional;
  */
 @Service
 public class TravelService {
+        
+        @Value("${GOOGLE_MAP_KEY}")
+        private String googleMapKey;
 
     private final TravelRepository travelRepository;
     private final TravelDayRepository travelDayRepository;
@@ -54,18 +59,7 @@ public class TravelService {
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
         List<TravelEntity> travels =
                 travelRepository.findByUserAndTravelStartAfterOrderByTravelStartAsc(ue, today);
-
-        return travels.stream()
-                .map(t -> new TravelSummaryResponse(
-                        t.getTravelId(),
-                        t.getTravelType(),
-                        t.getTravelDest(),
-                        t.getTravelStart().toString(),
-                        t.getTravelEnd().toString(),
-                        List.of(t.getTravelTheme1(), t.getTravelTheme2(), t.getTravelTheme3()),
-                        t.getCompanionType()
-                ))
-                .toList();
+        return convertToSummaryList(travels);
     }
 
     // past travel
@@ -75,18 +69,7 @@ public class TravelService {
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
         List<TravelEntity> travels =
                 travelRepository.findByUserAndTravelEndBeforeOrderByTravelEndDesc(ue, today);
-
-        return travels.stream()
-                .map(t -> new TravelSummaryResponse(
-                        t.getTravelId(),
-                        t.getTravelType(),
-                        t.getTravelDest(),
-                        t.getTravelStart().toString(),
-                        t.getTravelEnd().toString(),
-                        List.of(t.getTravelTheme1(), t.getTravelTheme2(), t.getTravelTheme3()),
-                        t.getCompanionType()
-                ))
-                .toList();
+        return convertToSummaryList(travels);
     }
 
     // travel in progress
@@ -96,18 +79,7 @@ public class TravelService {
         UserEntity ue = userService.getUserEntityByPublicId(publicId);
         List<TravelEntity> travels =
                 travelRepository.findByUserAndTravelStartLessThanEqualAndTravelEndGreaterThanEqualOrderByTravelStartAsc(ue, today, today);
-
-        return travels.stream()
-                .map(t -> new TravelSummaryResponse(
-                        t.getTravelId(),
-                        t.getTravelType(),
-                        t.getTravelDest(),
-                        t.getTravelStart().toString(),
-                        t.getTravelEnd().toString(),
-                        List.of(t.getTravelTheme1(), t.getTravelTheme2(), t.getTravelTheme3()),
-                        t.getCompanionType()
-                ))
-                .toList();
+        return convertToSummaryList(travels);
     }
 
     // read certain travel
@@ -148,7 +120,7 @@ public class TravelService {
                     days,
                     t.getCreatedDate().toString()
             );
-        } else throw new DataNotFoundException("TravelService", "해당 여행 정보 없음", "");
+        } else throw new DataNotFoundException("TravelService", "Travel not found", "");
     }
 
 
@@ -182,35 +154,11 @@ public class TravelService {
         travelRepository.saveAndFlush(travelEntity);
 
         // Insert record in database - 2
-        for (TravelDetailResponse.Days d : days) {
-            TravelDayEntity day = new TravelDayEntity(travelEntity, d.dayIndex());
-            travelDayRepository.save(day);
+        saveDaysAndCourses(travelEntity, days);
+        validateAndCorrectAllCoordinates(travelEntity);
 
-            for (TravelDetailResponse.Course c : d.courses()) {
-                TravelCourseEntity course = new TravelCourseEntity(
-                        day,
-                        c.locationName(),
-                        c.lat(), c.lng(),
-                        c.note(), c.theme(),
-                        c.howLong(), c.order()
-                );
-                travelCourseRepository.save(course);
-            }
-        }
-
-        // returning and parsing user DTO
-        return new TravelDetailResponse(
-                travelEntity.getTravelId(),
-                req.userPublicId(),
-                req.travelType(),
-                req.travelDest(),
-                req.startDate(),
-                req.endDate(),
-                req.themes(),
-                req.companionType(),
-                days,
-                travelEntity.getCreatedDate().toString()
-        );
+        // return with corrected coordinates
+        return readTravelDetail(travelEntity.getTravelId().toString());
     }
 
     // Delete
@@ -223,7 +171,7 @@ public class TravelService {
             travelRepository.delete(t);
 
             return response;
-        } else throw new DataNotFoundException("TravelService", "해당 여행 정보 없음", "");
+        } else throw new DataNotFoundException("TravelService", "Travel not found", "");
     }
 
     /**
@@ -256,34 +204,88 @@ public class TravelService {
 
             // generate new plan
             List<TravelDetailResponse.Days> days = aiService.generateTravel(req);
+            saveDaysAndCourses(t, days);
+            
+            // validate and correct coordinates
+            validateAndCorrectAllCoordinates(t);
+            
+            // return with corrected coordinates
+            return readTravelDetail(t.getTravelId().toString());
 
-            for (TravelDetailResponse.Days d : days) {
-                TravelDayEntity day = new TravelDayEntity(t, d.dayIndex());
-                travelDayRepository.save(day);
+        } else throw new DataNotFoundException("TravelService", "Travel not found", "");
+    }
 
-                for (TravelDetailResponse.Course c : d.courses()) {
-                    TravelCourseEntity course = new TravelCourseEntity(
-                            day, c.locationName(), c.lat(), c.lng(),
-                            c.note(), c.theme(), c.howLong(), c.order()
+    /**
+     * Convert TravelEntity list to TravelSummaryResponse list
+     * 
+     * @param travels travel entity list
+     * @return travel summary response list
+     */
+    private List<TravelSummaryResponse> convertToSummaryList(List<TravelEntity> travels) {
+        return travels.stream()
+                .map(t -> new TravelSummaryResponse(
+                        t.getTravelId(),
+                        t.getTravelType(),
+                        t.getTravelDest(),
+                        t.getTravelStart().toString(),
+                        t.getTravelEnd().toString(),
+                        List.of(t.getTravelTheme1(), t.getTravelTheme2(), t.getTravelTheme3()),
+                        t.getCompanionType()
+                ))
+                .toList();
+    }
+
+    /**
+     * Save days and courses to DB
+     * 
+     * @param travelEntity travel entity
+     * @param days days and courses data to save
+     */
+    private void saveDaysAndCourses(TravelEntity travelEntity, List<TravelDetailResponse.Days> days) {
+        for (TravelDetailResponse.Days d : days) {
+            TravelDayEntity day = new TravelDayEntity(travelEntity, d.dayIndex());
+            travelDayRepository.save(day);
+
+            for (TravelDetailResponse.Course c : d.courses()) {
+                TravelCourseEntity course = new TravelCourseEntity(
+                        day,
+                        c.locationName(),
+                        c.lat(), c.lng(),
+                        c.note(), c.theme(),
+                        c.howLong(), c.order()
+                );
+                travelCourseRepository.save(course);
+            }
+        }
+    }
+
+    /**
+     * Validate and correct all course coordinates
+     * 
+     * @param travel travel entity to validate
+     */
+    private void validateAndCorrectAllCoordinates(TravelEntity travel) {
+        for (TravelDayEntity day : travel.getTravelDays()) {
+            for (TravelCourseEntity course : day.getCourses()) {
+                
+                Optional<GeocodingUtil.Coordinates> corrected = 
+                    GeocodingUtil.validateAndCorrectCoordinates(
+                        course.getLocationName(),
+                        course.getLocationLat(),
+                        course.getLocationLng(),
+                        googleMapKey
                     );
+                
+                if (corrected.isPresent()) {
+                    course.setLocationLat(corrected.get().lat());
+                    course.setLocationLng(corrected.get().lng());
                     travelCourseRepository.save(course);
+                    
+                    System.out.println("Coordinate corrected: " + course.getLocationName() + 
+                        " -> (" + corrected.get().lat() + ", " + corrected.get().lng() + ")");
                 }
             }
-            
-            return new TravelDetailResponse(
-                    t.getTravelId(),
-                    req.userPublicId(),
-                    req.travelType(),
-                    req.travelDest(),
-                    req.startDate(),
-                    req.endDate(),
-                    req.themes(),
-                    req.companionType(),
-                    days,
-                    t.getCreatedDate().toString()
-            );
-
-        } else throw new DataNotFoundException("TravelService", "해당 여행 정보 없음", "");
+        }
     }
 
 }
