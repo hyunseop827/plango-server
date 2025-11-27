@@ -62,6 +62,15 @@ public class UserService {
         throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
+    @Transactional(readOnly = true)
+    public String getUserMbtiByPublicId(String publicId){
+        Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
+        if(userEntity.isPresent()){
+            return userEntity.get().getMbti();
+        }
+        throw new DataNotFoundException("UserService","해당 유저 없음","");
+    }
+
     @Transactional
     public UserReadResponse updateUserByPublicId(String publicId, UserUpdateRequest req) {
         Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
