@@ -50,4 +50,9 @@ public class TravelController {
     public TravelDeleteResponse deleteTravel(@PathVariable String travelId) {
         return travelService.deleteTravel(travelId);
     }
+
+    @PutMapping("/retry/{travelId}")
+    public TravelDetailResponse retryTravel(@PathVariable String travelId) {
+        return travelService.retryTravel(travelId);
+    }
 }

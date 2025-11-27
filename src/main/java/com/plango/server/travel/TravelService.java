@@ -226,4 +226,64 @@ public class TravelService {
         } else throw new DataNotFoundException("TravelService", "해당 여행 정보 없음", "");
     }
 
+    /**
+     * If user does not like what AI says, user can retry.
+     * Delete records and generate again.
+     */
+    @Transactional
+    public TravelDetailResponse retryTravel(String travelId) {
+        Long id = Long.valueOf(travelId);
+        Optional<TravelEntity> certainTravel = travelRepository.findByTravelId(id);
+
+        if (certainTravel.isPresent()) {
+            TravelEntity t = certainTravel.get();
+
+            TravelCreateRequest req = new TravelCreateRequest
+                    (t.getUser().getPublicId(),
+                            t.getTravelType(),
+                            t.getTravelDest(),
+                            t.getTravelStart().toString(),
+                            t.getTravelEnd().toString(),
+                            List.of(t.getTravelTheme1(),
+                                    t.getTravelTheme2(),
+                                    t.getTravelTheme3()),
+                            t.getCompanionType()
+                    );
+
+            // DB
+            t.getTravelDays().clear();
+            travelRepository.flush();
+
+            // generate new plan
+            List<TravelDetailResponse.Days> days = aiService.generateTravel(req);
+
+            for (TravelDetailResponse.Days d : days) {
+                TravelDayEntity day = new TravelDayEntity(t, d.dayIndex());
+                travelDayRepository.save(day);
+
+                for (TravelDetailResponse.Course c : d.courses()) {
+                    TravelCourseEntity course = new TravelCourseEntity(
+                            day, c.locationName(), c.lat(), c.lng(),
+                            c.note(), c.theme(), c.howLong(), c.order()
+                    );
+                    travelCourseRepository.save(course);
+                }
+            }
+            
+            return new TravelDetailResponse(
+                    t.getTravelId(),
+                    req.userPublicId(),
+                    req.travelType(),
+                    req.travelDest(),
+                    req.startDate(),
+                    req.endDate(),
+                    req.themes(),
+                    req.companionType(),
+                    days,
+                    t.getCreatedDate().toString()
+            );
+
+        } else throw new DataNotFoundException("TravelService", "해당 여행 정보 없음", "");
+    }
+
 }
