@@ -156,7 +156,6 @@ public class TravelService {
         saveDaysAndCourses(travelEntity, days);
 
         travelRepository.flush();
-        validateAndCorrectAllCoordinates(travelEntity);
 
         // return with corrected coordinates
         return readTravelDetail(travelEntity.getTravelId().toString());
@@ -206,9 +205,6 @@ public class TravelService {
             // generate new plan
             List<TravelDetailResponse.Days> days = aiService.generateTravel(req);
             saveDaysAndCourses(t, days);
-
-            // validate and correct coordinates
-            validateAndCorrectAllCoordinates(t);
 
             // return with corrected coordinates
             return readTravelDetail(t.getTravelId().toString());
@@ -276,36 +272,6 @@ public class TravelService {
                 allCourses.add(course);
             }
         }
-
-        travelCourseRepository.saveAll(allCourses);
-    }
-
-
-    /**
-     * Validate and correct location coordinates using Geocoding API with parallel processing.
-     * Only queries coordinates that are null to prevent duplicate API calls.
-     *
-     * @param travel travel entity containing courses to validate
-     */
-    private void validateAndCorrectAllCoordinates(TravelEntity travel) {
-        List<TravelCourseEntity> allCourses = travel.getTravelDays().stream()
-                .flatMap(day -> day.getCourses().stream())
-                .toList();
-
-        String destination = travel.getTravelDest();
-
-        allCourses.parallelStream().forEach(course -> {
-            // Execute geocoding only if coordinates are null
-            if (course.getLocationLat() == null || course.getLocationLng() == null) {
-                Coordinate corrected = GeocodingUtil.getLocationCoordinateWithLocationName(
-                        course.getLocationName(), destination, googleMapKey);
-                
-                if (corrected != null) {
-                    course.setLocationLat(corrected.latitude());
-                    course.setLocationLng(corrected.longitude());
-                }
-            }
-        });
 
         travelCourseRepository.saveAll(allCourses);
     }
