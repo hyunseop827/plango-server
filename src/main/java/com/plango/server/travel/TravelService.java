@@ -12,6 +12,7 @@ import com.plango.server.travel.entity.TravelEntity;
 import com.plango.server.travel.repos.TravelCourseRepository;
 import com.plango.server.travel.repos.TravelDayRepository;
 import com.plango.server.travel.repos.TravelRepository;
+import com.plango.server.travel.util.Coordinate;
 import com.plango.server.travel.util.GeocodingUtil;
 import com.plango.server.user.UserEntity;
 import com.plango.server.user.UserService;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -30,15 +32,14 @@ import java.util.Optional;
  */
 @Service
 public class TravelService {
-        
-    @Value("${google.maps.api-key}")
-    private String googleMapKey;
 
     private final TravelRepository travelRepository;
     private final TravelDayRepository travelDayRepository;
     private final TravelCourseRepository travelCourseRepository;
     private final UserService userService;
     private final AiService aiService;
+    @Value("${google.maps.api-key}")
+    private String googleMapKey;
 
     public TravelService(TravelRepository travelRepository,
                          TravelDayRepository travelDayRepository,
@@ -152,9 +153,9 @@ public class TravelService {
         );
 
         travelRepository.saveAndFlush(travelEntity);
-
-        // Insert record in database - 2
         saveDaysAndCourses(travelEntity, days);
+
+        travelRepository.flush();
         validateAndCorrectAllCoordinates(travelEntity);
 
         // return with corrected coordinates
@@ -205,10 +206,10 @@ public class TravelService {
             // generate new plan
             List<TravelDetailResponse.Days> days = aiService.generateTravel(req);
             saveDaysAndCourses(t, days);
-            
+
             // validate and correct coordinates
             validateAndCorrectAllCoordinates(t);
-            
+
             // return with corrected coordinates
             return readTravelDetail(t.getTravelId().toString());
 
@@ -217,7 +218,7 @@ public class TravelService {
 
     /**
      * Convert TravelEntity list to TravelSummaryResponse list
-     * 
+     *
      * @param travels travel entity list
      * @return travel summary response list
      */
@@ -237,13 +238,16 @@ public class TravelService {
 
     /**
      * Save days and courses to DB
-     * 
+     *
      * @param travelEntity travel entity
-     * @param days days and courses data to save
+     * @param days         days and courses data to save
      */
     private void saveDaysAndCourses(TravelEntity travelEntity, List<TravelDetailResponse.Days> days) {
+        List<TravelCourseEntity> allCourses = new ArrayList<>();
+        
         for (TravelDetailResponse.Days d : days) {
             TravelDayEntity day = new TravelDayEntity(travelEntity, d.dayIndex());
+            travelEntity.getTravelDays().add(day);
             travelDayRepository.save(day);
 
             for (TravelDetailResponse.Course c : d.courses()) {
@@ -254,38 +258,36 @@ public class TravelService {
                         c.note(), c.theme(),
                         c.howLong(), c.order()
                 );
-                travelCourseRepository.save(course);
+                day.getCourses().add(course);
+                allCourses.add(course);
             }
         }
+
+        travelCourseRepository.saveAll(allCourses);
     }
+
 
     /**
-     * Validate and correct all course coordinates
-     * 
-     * @param travel travel entity to validate
+     * Set location coordinate with Geocoding API (병렬 처리)
+     *
+     * @param travel
      */
     private void validateAndCorrectAllCoordinates(TravelEntity travel) {
-        for (TravelDayEntity day : travel.getTravelDays()) {
-            for (TravelCourseEntity course : day.getCourses()) {
-                
-                Optional<GeocodingUtil.Coordinates> corrected = 
-                    GeocodingUtil.validateAndCorrectCoordinates(
-                        course.getLocationName(),
-                        course.getLocationLat(),
-                        course.getLocationLng(),
-                        googleMapKey
-                    );
-                
-                if (corrected.isPresent()) {
-                    course.setLocationLat(corrected.get().lat());
-                    course.setLocationLng(corrected.get().lng());
-                    travelCourseRepository.save(course);
-                    
-                    System.out.println("Coordinate corrected: " + course.getLocationName() + 
-                        " -> (" + corrected.get().lat() + ", " + corrected.get().lng() + ")");
-                }
-            }
-        }
-    }
 
+        List<TravelCourseEntity> allCourses = travel.getTravelDays().stream()
+                .flatMap(day -> day.getCourses().stream())
+                .toList();
+
+        allCourses.parallelStream().forEach(course -> {
+            Coordinate corrected = GeocodingUtil.getLocationCoordinateWithLocationName(
+                    course.getLocationName(), googleMapKey);
+            
+            if (corrected != null) {
+                course.setLocationLat(corrected.latitude());
+                course.setLocationLng(corrected.longitude());
+            }
+        });
+
+        travelCourseRepository.saveAll(allCourses);
+    }
 }
