@@ -3,6 +3,7 @@ package com.plango.server.user;
 import com.plango.server.user.dto.UserCreateRequest;
 import com.plango.server.user.dto.UserCreateResponse;
 import com.plango.server.user.dto.UserReadResponse;
+import com.plango.server.user.dto.UserUpdateRequest;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -27,5 +28,10 @@ public class UserController {
     @GetMapping("/{publicId}")
     public UserReadResponse getUser(@PathVariable String publicId) {
         return userService.getUserByPublicId(publicId);
+    }
+
+    @PutMapping("/{publicId}")
+    public UserReadResponse updateUser(@PathVariable String publicId, @RequestBody UserUpdateRequest req) {
+        return userService.updateUserByPublicId(publicId,req);
     }
 }

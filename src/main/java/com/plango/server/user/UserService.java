@@ -3,6 +3,7 @@ package com.plango.server.user;
 import com.plango.server.exception.DataNotFoundException;
 import com.plango.server.user.dto.UserCreateRequest;
 import com.plango.server.user.dto.UserReadResponse;
+import com.plango.server.user.dto.UserUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +62,21 @@ public class UserService {
         throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
+    @Transactional
+    public UserReadResponse updateUserByPublicId(String publicId, UserUpdateRequest req) {
+        Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
+        if(userEntity.isPresent()){
+            UserEntity ue1 = userEntity.get();
+            ue1.setNickname(req.nickname());
+            ue1.setMbti(req.mbti());
+            userRepository.saveAndFlush(ue1);
+
+            return new UserReadResponse(ue1.getPublicId(), ue1.getNickname(), ue1.getMbti());
+        }
+        throw new DataNotFoundException("UserService","해당 유저 없음", "");
+    }
+
+
     /**
      * returning user by input public ID
      * @param publicId
@@ -75,17 +91,4 @@ public class UserService {
         throw new DataNotFoundException("UserService","해당 유저 없음", "");
     }
 
-    /**
-     * returning user MBTI searching by user public ID
-     * @param publicId
-     * @return exception or user MBTI
-     */
-    @Transactional(readOnly = true)
-    public String getUserMbtiByPublicId(String publicId){
-        Optional<UserEntity> userEntity = userRepository.findByPublicId(publicId);
-        if(userEntity.isPresent()){
-            return userEntity.get().getMbti();
-        }
-        throw new DataNotFoundException("UserService","해당 유저 없음", "");
-    }
 }

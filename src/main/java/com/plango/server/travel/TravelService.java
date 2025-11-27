@@ -31,8 +31,8 @@ import java.util.Optional;
 @Service
 public class TravelService {
         
-        @Value("${GOOGLE_MAP_KEY}")
-        private String googleMapKey;
+    @Value("${google.maps.api-key}")
+    private String googleMapKey;
 
     private final TravelRepository travelRepository;
     private final TravelDayRepository travelDayRepository;

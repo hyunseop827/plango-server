@@ -57,4 +57,12 @@ public class UserEntity {
     public String getMbti() {
         return mbti;
     }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void setMbti(String mbti) {
+        this.mbti = mbti;
+    }
 }
