@@ -10,7 +10,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.stereotype.Service;
 import java.util.*;
-import com.google.genai.errors.ServerException;
 
 /**
  * Service layer for AI generated travel.
@@ -111,6 +110,42 @@ public class AiService {
 
 
                 AiTravelResponse detail = mapper.readValue(json, AiTravelResponse.class);
+
+                // Coordinate validation logging
+                System.out.println("===== AI travel coordinate validation =====");
+                int totalCourses = 0;
+                int coursesWithCoordinates = 0;
+                int coursesWithoutCoordinates = 0;
+                
+                if (detail.getDays() != null) {
+                    for (int i = 0; i < detail.getDays().size(); i++) {
+                        var day = detail.getDays().get(i);
+                        if (day != null && day.getCourses() != null) {
+                            System.out.println("Day " + (i + 1) + ": " + day.getCourses().size() + " courses");
+                            for (var course : day.getCourses()) {
+                                if (course != null) {
+                                    totalCourses++;
+                                    boolean hasCoordinates = course.getLat() != null && course.getLng() != null;
+                                    
+                                    if (hasCoordinates) {
+                                        coursesWithCoordinates++;
+                                        System.out.println("  ✓ " + course.getLocationName() 
+                                            + " (lat: " + course.getLat() + ", lng: " + course.getLng() + ")");
+                                    } else {
+                                        coursesWithoutCoordinates++;
+                                        System.out.println("  ✗ " + course.getLocationName() 
+                                            + " (lat: " + course.getLat() + ", lng: " + course.getLng() + ") - MISSING");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                System.out.println("Total courses: " + totalCourses);
+                System.out.println("With coordinates: " + coursesWithCoordinates);
+                System.out.println("Without coordinates: " + coursesWithoutCoordinates + " (will use geocoding)");
+                System.out.println("==========================================");
 
                 return normalize(detail);
             }

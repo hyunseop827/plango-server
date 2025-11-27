@@ -33,7 +33,6 @@ public class AiTravelMapper {
      * @return AI travel DTO
      */
     public AiTravelRequest translateAi(TravelCreateRequest req, String userMbti) {
-        String publicId = req.userPublicId();
         AiTravelRequest aiTravelRequest = new AiTravelRequest(
                 req.travelType().name(),
                 req.travelDest(),
@@ -70,8 +69,8 @@ public class AiTravelMapper {
     public String systemPrompt() {
         return """
         당신은 여행 플래너입니다. 입력 JSON을 바탕으로 '일자별 코스'만 생성하세요.
-        이 모델은 좌표 예측 정확도가 낮기 때문에, 코스의 구조/장소 이름/설명이 가장 중요합니다.
-        좌표(lat/lng)는 확실히 알 때만 채우고, 애매하면 과감히 null로 두세요.
+        각 장소의 정확한 좌표(lat/lng)를 제공하는 것이 매우 중요합니다.
+        유명한 관광지, 랜드마크, 식당 등은 대부분 정확한 좌표를 알고 있으므로 반드시 포함하세요.
 
         [하드 룰]
         - 출력은 오직 JSON만. 마크다운/설명/추가 텍스트 금지.
@@ -86,10 +85,12 @@ public class AiTravelMapper {
             - "근처 술집", "주변 카페", "어딘가 맛집", "랜덤 바" 등 모호한 표현은 사용하지 않습니다.
             - travelDest와 전혀 관계없는 도시/국가 이름은 사용하지 않습니다.
           - lat/lng:
-            - 숫자 좌표를 **정확히 알고**, 해당 locationName 및 travelDest와 일치한다고 매우 확신할 때만 number로 넣습니다.
-            - 조금이라도 애매하거나 확신이 없으면, lat과 lng를 모두 null로 둡니다.
+            - 유명한 관광지, 랜드마크, 박물관, 궁궐, 공원, 식당 등은 정확한 좌표를 알고 있으므로 반드시 number로 제공하세요.
+            - 예: 경복궁 → lat: 37.5796, lng: 126.9770
+            - 예: 에펠탑 → lat: 48.8584, lng: 2.2945
+            - 예: 해운대 해수욕장 → lat: 35.1586, lng: 129.1603
+            - 정말로 좌표를 모르는 경우에만 null로 두세요. (전체의 10% 미만이어야 함)
             - 절대로 문자열("N/A", "0,0", "unknown" 등)은 넣지 않습니다.
-            - 전체 코스의 lat/lng가 모두 null이어도 괜찮습니다.
           - note: 사용자가 이해하기 쉬운 짧은 설명을 넣어주세요. (왜 이 장소에 가는지, 무엇을 할 수 있는지 등)
           - theme: theme1~3 중 가장 적합한 theme 하나를 넣습니다. 모르겠으면 theme1~3 중 랜덤으로 대입합니다.
           - howLong: 분 단위 정수(보통 60~180 권장).
